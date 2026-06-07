@@ -1,105 +1,161 @@
-# lets-play-API
-Projet : Let's Play – API REST CRUD avec Spring Boot & MongoDB
-Dans ce projet, vous allez construire une API REST CRUD nommée Let's Play, en utilisant Spring Boot et MongoDB. Le système gérera des utilisateurs et des produits, permettant des opérations de création, lecture, mise à jour et suppression (CRUD) sur ces deux entités.
+# 🎮 Let's Play API
+Hey I'm Timothée Sylla and I made Let's Play : 
 
-Vous implémenterez également l'authentification et l'autorisation via une sécurité basée sur les tokens, garantissant que seuls les utilisateurs autorisés peuvent effectuer des actions restreintes. Ce projet se concentre sur les meilleures pratiques du développement backend : codage sécurisé, gestion des erreurs, principes de conception REST et gestion des accès par rôles.
+Let's Play is a robust, secure, and production-ready **RESTful CRUD API** built using **Spring Boot** and **MongoDB**. The application provides full user management, product catalogs, and state-of-the-art security mechanisms implementing JSON Web Tokens (JWT) along with Role-Based Access Control (RBAC) and data-ownership validation layers.
 
-Mise en situation (Role Play)
-Vous êtes un développeur backend chargé de concevoir une API REST sécurisée et évolutive pour une petite plateforme de type e-commerce. Votre objectif est de créer une application qui permet aux administrateurs de gérer tous les utilisateurs et produits, tandis que les utilisateurs standards ne peuvent gérer que leurs propres produits. Le système doit être sécurisé, robuste et pleinement conforme aux standards REST.
+---
 
-Objectifs d'apprentissage
-Maîtriser Spring Boot et la conception d'API RESTful.
+## 🚀 Key Features
 
-Intégrer et gérer des données avec MongoDB.
+- **Full CRUD Support**: Complete lifecycle management for `User` and `Product` entities.
+- **JWT-Based Authentication**: Secure stateless authentication using custom filter pipelines (`JwtFilter`).
+- **Granular Authorization (RBAC)**: Secure routes distinguished by user roles (`USER`, `ADMIN`).
+- **Strict Data Ownership Validation**: Users can only modify or delete products they created (`@PreAuthorize` validation via `ProductService#isOwner`). Administrative accounts bypass ownership limits.
+- **Automated User Linking**: Products are automatically mapped to the authenticated session context's User ID during creation.
+- **Secure Password Hashing**: Passwords stored safely using cryptographic hashing via `PasswordEncoder`.
 
-Implémenter des opérations CRUD pour plusieurs entités.
+---
 
-Appliquer Spring Security et l'authentification JWT.
+## 📂 Project Architecture
 
-Gérer le contrôle d'accès basé sur les rôles (Admin vs Utilisateur).
+Based on the implemented structure, the project follows clean MVC/DDD layered decoupling design principles:
 
-Implémenter la gestion sécurisée des mots de passe (hachage et salage).
+```text
+lets-play/
+├── gradle/
+├── src/
+│   ├── main/
+│   │   ├── java/com/lets_play/lets_play/
+│   │   │   ├── config/
+│   │   │   │   ├── JwtFilter.java         # Intercepts requests & validates JWT signatures
+│   │   │   │   ├── JwtUtil.java           # Generates, parses, and reads claims from tokens
+│   │   │   │   └── MongoConfig.java       # Database setup and custom configurations
+│   │   │   ├── controllers/
+│   │   │   │   ├── ProductController.java # Endpoints for product catalog actions
+│   │   │   │   └── UserController.java    # Endpoints for Auth, Registration & Management
+│   │   │   ├── models/
+│   │   │   │   ├── Product.java           # Product schema/document template
+│   │   │   │   └── User.java              # User credentials, profiles, and roles schema
+│   │   │   ├── repositories/
+│   │   │   │   ├── ProductRepository.java # Product MongoDB Data Access Layer
+│   │   │   │   └── UserRepository.java    # User MongoDB Data Access Layer
+│   │   │   ├── security/
+│   │   │   │   └── SecurityConfig.java    # Spring Security URL filters and permission setup
+│   │   │   ├── services/
+│   │   │   │   └── ProductService.java    # Ownership verification business logic
+│   │   │   └── LetsPlayApplication.java   # Spring Boot Application bootstrap entrypoint
+│   │   └── resources/
+│   │       └── application.properties     # App configuration profiles & connection strings
+└── build.gradle
+```
 
-Mettre en place une gestion d'erreurs robuste avec des réponses HTTP explicites.
+---
 
-1. Conception de la base de données
-Concevez deux entités principales : User (Utilisateur) et Product (Produit), avec une relation "un-à-plusieurs" (un utilisateur peut posséder plusieurs produits).
+## 🛠️ Prerequisites & Installation
 
-classDiagram
-    User "1" -- "n" Product : Possède
-    User : +String id
-    User : +String name
-    User : +String email
-    User : +String password
-    User : +String role
-    Product : +String id
-    Product : +String name
-    Product : +String description
-    Product : +Double price
-    Product : +String userId
+Before spinning up the application locally, ensure you have the following software installed:
+- **Java Development Kit (JDK)**: Version 17 or higher
+- **MongoDB**: An active local instance running on port `27017` (or a remote MongoDB Atlas connection URI)
+- **Build Tool**: Gradle (Wrapper included)
 
+### 1. Configuration Setup
+Modify or create the configuration file located at `src/main/resources/application.properties`:
 
-2. Développement de l'API
-Construisez des API RESTful pour les utilisateurs et les produits en respectant les méthodes HTTP et les codes de réponse appropriés. Implémentez les points d'accès (endpoints) suivants :
+```properties
+spring.data.mongodb.uri=mongodb://localhost:27017/lets_play
+spring.data.mongodb.database=lets_play
+server.port=8080
 
-GET /products → Accès public (aucune authentification requise).
+# JWT Custom Settings (Configure inside JwtUtil)
+jwt.secret=your_super_secret_high_entropy_key_at_least_256_bits_long
+jwt.expiration=86400000
+```
 
-POST /products → Créer un nouveau produit (utilisateurs authentifiés uniquement).
+### 2. Building and Launching the Server
+Navigate to the root directory of your project using your favorite CLI shell and run:
 
-PUT /products/{id} et DELETE /products/{id} → Limité aux propriétaires du produit ou aux admins.
+```bash
+# Clean project and compile binaries
+./gradlew clean build
 
-GET /users et endpoints associés → Accessibles aux administrateurs uniquement.
+# Start up the Spring Boot server
+./gradlew bootRun
+```
+The application will boot up natively at: `http://localhost:8080`
 
-3. Authentification et Autorisation
-Implémentez l'authentification JWT avec Spring Security.
+---
 
-Permettez aux utilisateurs de s'inscrire, de se connecter et de recevoir des tokens.
+## 📡 API Documentation & Endpoints
 
-Restreignez l'accès selon les rôles :
+### 🔐 Authentication & User Routing (`/api/users`)
 
-Admin : Gérer tous les utilisateurs et tous les produits.
+| Method | Endpoint | Access Level | Description | Payload Requirements |
+| :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/api/users/register` | 🔓 Public | Registers a new account. Roles fallback to `USER` if left blank. Passwords auto-encrypted. | User JSON (`email`, `password`, `role`) |
+| **POST** | `/api/users/login` | 🔓 Public | Authenticates user, yields access metadata + active Bearer JWT token. | User login credentials JSON |
+| **GET** | `/api/users` | 🛡️ Admin Only | Returns a flat array of all registered accounts inside the DB. | *None (Requires Admin Token)* |
 
-User : Gérer uniquement ses propres produits.
+#### 📝 Register Payload Sample (`POST /api/users/register`)
+```json
+{
+  "email": "percy.jackson@camphalfblood.com",
+  "password": "PoseidonChild123",
+  "role": "USER"
+}
+```
 
-4. Gestion des erreurs
-Assurez-vous que l'API ne renvoie jamais d'erreurs 5XX non gérées.
+#### 📥 Login Response Sample (`POST /api/users/login`)
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeS5qYWNrc29uQGNhbXBoYWxmYmxvb2QuY29tIiwicm9sZSI6IlVTRVIifQ...",
+  "email": "percy.jackson@camphalfblood.com",
+  "role": "USER"
+}
+```
 
-Utilisez une gestion globale des exceptions pour capturer et formater les réponses d'erreur.
+---
 
-Renvoyez des codes d'état HTTP clairs (400, 401, 403, 404, 409, etc.).
+### ⚔️ Product Routing (`/api/products`)
 
-5. Mesures de sécurité
-Hachez et salez les mots de passe avec BCrypt avant la sauvegarde.
+| Method | Endpoint | Access Level | Description | Payload Requirements |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/api/products` | 🔓 Public | Fetches all products currently active in the database store. | *None* |
+| **GET** | `/api/products/{id}` | 🔓 Public | Finds and displays a specific item by its unique MongoDB Identifier. | *None* |
+| **POST** | `/api/products` | 🔑 Authenticated | Creates an item and binds it natively to the caller's unique User ID. | Product JSON (Do **not** send an `id`) |
+| **PUT** | `/api/products/{id}` | 👤 Owner / Admin | Updates details of a product. Monitored strictly by context protection. | Product Fields JSON update |
+| **DELETE**| `/api/products/{id}` | 👤 Owner / Admin | Safely purges a product out of the database collection forever. | *None (Requires Owner/Admin Token)* |
 
-Validez et assainissez (sanitize) les entrées utilisateur pour prévenir les injections MongoDB.
+#### 📝 Create Product Payload Sample (`POST /api/products`)
+> ⚠️ **Important Architecture Notice**: Do *not* send an explicit `"id"` field inside the body block when firing a `POST` request. MongoDB will calculate a unique string hash automatically. Including a static ID forces an item upsert/overwrite instead of an appending action.
 
-Excluez les champs sensibles (ex: mot de passe) des réponses de l'API.
+```json
+{
+  "name": "Anaklusmos",
+  "description": "Épée magique et mythique (Riptide). Elle se transforme en stylo-bille et revient toujours dans la poche de son propriétaire.",
+  "price": 10.0
+}
+```
 
-Utilisez HTTPS pour la transmission sécurisée des données.
+---
 
-Contraintes
-Utiliser Spring Boot et MongoDB (pas de bases de données SQL).
+## 🔒 Security Operations & Testing Workflow
 
-Utiliser Spring Security ou JWT pour l'authentification.
+This section outlines how to perform verification flows within tools such as **Postman** to confirm ownership structures are operating smoothly:
 
-Retourner toutes les données au format JSON.
+1. **Sign-up User A**: Execute a registration command to create account `userA@test.com`.
+2. **Authorize User A Session**: Post credentials to `/api/users/login`. Capture the generated `"token"` string literal payload response text.
+3. **Configure Headers**: Copy the token string value. Inside Postman, select the **Authorization** tab, choose **Bearer Token** type, and paste it directly.
+4. **Publish Object (POST)**: Broadcast an items payload via `POST /api/products`. The server automatically grabs User A's identity out of the contextual authentication container string and locks it inside the product document tracking field (`userId`).
+5. **Simulate Hostile Ingestion (User B)**: Sign in or register as a separate client profile entity (`userB@test.com`). Grab their specific token context and perform an alteration attempt or a purge call target on User A's generated product asset ID:
+   - `DELETE /api/products/{target_id}`
+   - **Expected Behavior Outcome**: Server drops request, logging explicit **403 Forbidden** security boundaries blocks.
+6. **Self-Ownership Access Validation**: Return to User A or Admin authority token context layouts and resend the request. The application registers validated rights authorization context clearings and releases a **204 No Content** success tracking footprint flag.
 
-Aucune donnée sensible ne doit apparaître dans les réponses de l'API.
+---
 
-Évaluation
-Le projet sera évalué par une revue de code et des tests fonctionnels selon les critères suivants :
+## 🛠️ Built With
 
-⚙️ Fonctionnalité : CRUD et authentification correctement implémentés.
-
-🔐 Sécurité : Gestion correcte des rôles et des mots de passe.
-
-🚫 Gestion des erreurs : Codes d'état appropriés et aucune erreur 5XX brute.
-
-🧱 Qualité du code : Code propre, modulaire et bien structuré.
-
-📘 Documentation : Instructions claires et explication des endpoints.
-
-Fonctionnalités Bonus (Optionnel)
-Configuration CORS : Implémenter des politiques de partage de ressources cross-origin précises.
-
-Limitation de débit (Rate Limiting) : Prévenir les attaques par force brute ou les requêtes excessives.
+- **Spring Boot 3.x** - Backend Java core application architecture framework context.
+- **Spring Security** - Security layer controlling access control filtering.
+- **Spring Data MongoDB** - Abstracted document mapping structures handling entity lifecycles.
+- **JSON Web Tokens (JWT)** - Compact stateless identity transmission payload standard tracking.
